@@ -1,5 +1,5 @@
 AC_PREREQ(2.59)
-AC_COPYRIGHT([Copyright (c) 2011 Varnish Software AS])
+AC_COPYRIGHT([Copyright (c) 2011-2013 Varnish Software AS])
 AC_INIT([libvmod-throttle], [trunk])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(src/vmod_throttle.vcc)
@@ -45,27 +45,25 @@ if test "x$VARNISHSRC" = x; then
 	AC_MSG_ERROR([No Varnish source tree specified])
 fi
 VARNISHSRC=`cd $VARNISHSRC && pwd`
-AC_CHECK_FILE([$VARNISHSRC/include/varnishapi.h],
-	[],
-	[AC_MSG_FAILURE(["$VARNISHSRC" is not a Varnish source directory])]
-)
 AM_CONDITIONAL(HAVE_VARNISHSRC, [test -n $VARNISHSRC])
-
-# Check that varnishtest is built in the varnish source directory
-AC_CHECK_FILE([$VARNISHSRC/bin/varnishtest/varnishtest],
-	[],
-	[AC_MSG_FAILURE([Can't find "$VARNISHSRC/bin/varnishtest/varnishtest". Please build your varnish source directory])]
-)
 
 # vmod installation dir
 AC_ARG_VAR([VMODDIR], [vmod installation directory @<:@LIBDIR/varnish/vmods@:>@])
 if test "x$VMODDIR" = x; then
 	VMODDIR=`pkg-config --variable=vmoddir varnishapi`
 	if test "x$VMODDIR" = x; then
-		AC_MSG_FAILURE([Can't determine vmod installation directory])
+		AC_MSG_FAILURE([Unable to determine vmod installation directory])
 	fi
 fi
 AM_CONDITIONAL(HAVE_VMODDIR, [test -n $VMODDIR])
+
+# Varnish include files tree
+VARNISH_VMOD_INCLUDES
+VARNISH_VMOD_DIR
+VARNISH_VMODTOOL
+
+AC_PATH_PROG([VARNISHTEST], [varnishtest])
+AC_PATH_PROG([VARNISHD], [varnishd])
 
 AC_CONFIG_FILES([
 	Makefile

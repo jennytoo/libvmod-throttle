@@ -7,8 +7,9 @@ Varnish Throttling Module
 -------------------------
 
 :Author: Nicolas Deschildre
-:Date: 2012-10-06
-:Version: 3-1.0
+:Updated by: Jennifer Lang
+:Date: 2014-05-16
+:Version: 4.0.0
 :Manual section: 3
 
 SYNOPSIS
@@ -55,29 +56,26 @@ Example
     Prevent a single user (or crazy googlebot) to make a denial of service by punching through the cache: limit MISS calls on non-static assets by IP, max 3 req/s, 10 req/30s, 30 req/5m::
 
             sub vcl_miss {
-                if(req.url !~ "\.(jpg|jpeg|png|gif|ico|swf|css|js|html|htm)$") {
-                    if(throttle.is_allowed("ip:" + client.ip, "3req/s, 10req/30s, 30req/5m") > 0s) {
-                            error 429 "Calm down";
-                    }
+              if (req.url !~ "\.(jpg|jpeg|png|gif|ico|swf|css|js|html|htm)$") {
+                if (throttle.is_allowed("ip:" + client.ip, "3req/s, 10req/30s, 30req/5m") > 0s) {
+                  return(synth(429, "Calm down"));
                 }
+              }
             }
 
     API rate limiting: limit calls by IP and API call: max 2 req/s, 100 req/2h, 1000 req/d. If an API-key is given, allow more.::
 
             sub vcl_recv {
-                if(req.url ~ "^/my_api_path/my_api_name") {
-                    //Consider using libvmod-redis to share apikey infos between Varnish && your api key management app
-                    if(req.http.X-apikey *is valid*) {
-                        if(throttle.is_allowed("ip:" + client.ip" + ":api:[my_api_name]:auth", "5req/s, 10000req/d") > 0s) {
-                           error 429 "Calm down";
-                        }
-                    else
-                    {
-                        if(throttle.is_allowed("ip:" + client.ip" + ":api:[my_api_name]" + req.url, "2req/s, 100req/2h, 1000req/d") > 0s) {
-                           error 429 "Calm down";
-                        }
-                    }
+              if (req.url ~ "^/my_api_path/my_api_name") {
+                // Consider using libvmod-redis to share apikey infos between Varnish && your api key management app
+                if (req.http.X-apikey *is valid*) {
+                  if (throttle.is_allowed("ip:" + client.ip" + ":api:[my_api_name]:auth", "5req/s, 10000req/d") > 0s) {
+                    return(synth(429, "Calm down"));
+                  } else if (throttle.is_allowed("ip:" + client.ip" + ":api:[my_api_name]" + req.url, "2req/s, 100req/2h, 1000req/d") > 0s) {
+                    return(synth(429, "Calm down"));
+                  }
                 }
+              }
             }
 
     Please note: You cannot set 2 differents set of rate limits for a same key. (If you do, only one will be used, and the other will be ignored). In this example, simply add some extra text to the key to differentiate the authentificated calls from the non-authentificated ones.
@@ -95,24 +93,24 @@ Arguments
 
     rate_limit: A single rate limit, with the same syntax than in the is_allowed() function. It has to be one of the rate limits you defined in the is_allowed() function.
 Return value
-    INT
+    INT; -1 if the key is not found
 Description
     Return the number of remaining allowed calls for a given key, and for a given rate limitation.
 Example
     In the API example above, show in a header the remaining calls for the hour::
 
             sub vcl_recv {
-                if(req.url ~ "^/my_api_path/my_api_name") {
-                    if(throttle.is_allowed("ip:" + client.ip" + ":api:[my_api_name]", "5req/s, 100req/h") > 0s) {
-                       error 429 "Calm down";
-                    }
+              if (req.url ~ "^/my_api_path/my_api_name") {
+                if (throttle.is_allowed("ip:" + client.ip" + ":api:[my_api_name]", "5req/s, 100req/h") > 0s) {
+                  return(synth(429, "Calm down"));
                 }
+              }
             }
 
             sub vcl_deliver {
-                if(req.url ~ "^/my_api_path/my_api_name") {
-                    set resp.http.X-throttle-remaining-calls = throttle.remaining_calls("ip:" + client.ip" + ":api:[my_api_name]", "100req/h");
-                }
+              if (req.url ~ "^/my_api_path/my_api_name") {
+                set resp.http.X-throttle-remaining-calls = throttle.remaining_calls("ip:" + client.ip" + ":api:[my_api_name]", "100req/h");
+              }
             }
 
 MEMORY MANAGEMENT AND DENIAL OF SERVICE
@@ -167,7 +165,8 @@ Usage::
 
 `VARNISHSRC` is the directory of the Varnish source tree for which to
 compile your vmod. Both the `VARNISHSRC` and `VARNISHSRC/include`
-will be added to the include search paths for your module.
+will be added to the include search paths for your module. (currently this is
+not true as this will always use the system varnish include directories)
 
 Optionally you can also set the vmod install directory by adding
 `VMODDIR=DIR` (defaults to the pkg-config discovered directory from your
@@ -190,7 +189,7 @@ In your VCL you could then use this vmod along the following lines::
 HISTORY
 =======
 
-This module use libvmod-example as a base.
+This module use libvmod-example as a base and has been updated to work with varnish 4.0
 
 COPYRIGHT
 =========

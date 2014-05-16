@@ -2,7 +2,7 @@
 #include <pthread.h>
 
 #include "vrt.h"
-#include "bin/varnishd/cache.h"
+#include "cache/cache.h"
 
 #include "vcc_if.h"
 
@@ -378,7 +378,7 @@ init_function(struct vmod_priv *pc, const struct VCL_conf *conf) {
 
 // Public: is_allowed VCL command
 double
-vmod_is_allowed(struct sess *sp, struct vmod_priv *pc, const char* key, const char* window_limits) {
+vmod_is_allowed(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key, const char* window_limits) {
   struct vmodth_priv *priv;
   struct vmodth_calls *calls;
 	double result = 0;
@@ -461,8 +461,8 @@ vmod_is_allowed(struct sess *sp, struct vmod_priv *pc, const char* key, const ch
 }
 
 // Public: is_allowed VCL command
-int
-vmod_remaining_calls(struct sess *sp, struct vmod_priv *pc, const char* key, const char* window_limit) {
+VCL_INT
+vmod_remaining_calls(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key, const char* window_limit) {
   int result = -1;
   char* window_limit_str;
   struct vmodth_priv *priv;
@@ -507,8 +507,8 @@ vmod_remaining_calls(struct sess *sp, struct vmod_priv *pc, const char* key, con
 }
 
 // Public: memory_usage VCL command, used for debugging
-int
-vmod_memory_usage(struct sess *sp, struct vmod_priv *pc) {
+VCL_INT
+vmod_memory_usage(const struct vrt_ctx *ctx, struct vmod_priv *pc) {
   int result = 0;
   struct vmodth_priv *priv;
   struct vmodth_calls *calls;

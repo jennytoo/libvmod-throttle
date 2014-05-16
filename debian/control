@@ -2,11 +2,12 @@ Source: libvmod-throttle
 Section: web
 Priority: extra
 Maintainer: Varnish Software <support@varnish-software.com>
-Build-Depends: debhelper (>= 7), build-essential, python-docutils
+Build-Depends: debhelper (>= 7), build-essential, python-docutils,
+ libvarnishapi1-dev (>= 4.0.0)
 Standards-Version: 3.8.1
 Vcs-Git: git://github.com/lkarsten/libvmod-throttle.git
 
 Package: libvmod-throttle
 Architecture: any
-Depends: varnish, ${Varnish:ABI}, ${misc:Depends}
+Depends: varnish (>= 4.0.0), libvarnishapi1 (>= 4.0.0), ${misc:Depends}
 Description: Request rate limiting VMOD for Varnish
