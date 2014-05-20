@@ -50,7 +50,7 @@ struct vmodth_calls {
 struct vmodth_priv {
   //Status: Hashmap of the call sets
   struct vmodth_calls* hashmap[4096];
-  //status: Total number of calls to is_allowed(), which an answer of 0.0s. Will 
+  //status: Total number of calls to is_allowed(), which an answer of 0.0s. Will
   unsigned long total_accepted_calls;
 };
 
@@ -192,6 +192,7 @@ struct vmodth_calls* _vmod_get_call_set_from_key(struct vmodth_priv* priv, char*
       else {
         parsed_wins = realloc(parsed_wins, sizeof(struct vmodth_call_win) * parsed_win_count);
       }
+      AN(parsed_wins);
       memcpy(parsed_wins + (parsed_win_count - 1), &parsed_win, sizeof(struct vmodth_call_win));
     }
 
@@ -204,6 +205,7 @@ struct vmodth_calls* _vmod_get_call_set_from_key(struct vmodth_priv* priv, char*
     result = malloc(sizeof(struct vmodth_calls));
     AN(result);
     result->key = malloc(strlen(key) + 1);
+    AN(result->key);
     strncpy(result->key, key, strlen(key) + 1);
     result->first = NULL;
     result->last = NULL;
@@ -220,7 +222,7 @@ struct vmodth_calls* _vmod_get_call_set_from_key(struct vmodth_priv* priv, char*
 }
 
 // Private: Update the window counter (e.g. the last minute calls counter)
-void 
+void
 _vmod_update_window_counter(struct vmodth_call_win* call_win, double now) {
   while(call_win->last_call && call_win->last_call->time < now - call_win->length) {
     call_win->last_call = call_win->last_call->prev;
@@ -229,7 +231,7 @@ _vmod_update_window_counter(struct vmodth_call_win* call_win, double now) {
 }
 
 // Private: Return the amount of time to wait to be allowed in this time window
-double 
+double
 _vmod_get_time_wait_for_window_compliance(struct vmodth_call_win* call_win, double now) {
   double result = 0.0;
 
@@ -241,7 +243,7 @@ _vmod_get_time_wait_for_window_compliance(struct vmodth_call_win* call_win, doub
 }
 
 // Private: Update the window counter (e.g. the last minute calls counter)
-void 
+void
 _vmod_increment_window_counter(struct vmodth_call* new_call, struct vmodth_call_win* call_win) {
   call_win->nb_calls++;
   if(call_win->last_call == NULL) {
@@ -250,7 +252,7 @@ _vmod_increment_window_counter(struct vmodth_call* new_call, struct vmodth_call_
 }
 
 // Private: Remove older entries
-void 
+void
 _vmod_remove_older_entries(struct vmodth_calls* calls, double now) {
   struct vmodth_call *prev;
   int max_win_max_calls = 0;
@@ -267,8 +269,7 @@ _vmod_remove_older_entries(struct vmodth_calls* calls, double now) {
     }
   }
 
-  while(calls->last && 
-    (calls->nb_calls > max_win_max_calls || calls->last->time < now - max_win_length)) {
+  while(calls->last && calls->last->time < now - max_win_length) {
     prev = calls->last->prev;
     free(calls->last);
     calls->last = prev;
@@ -298,7 +299,7 @@ _vmod_garbage_collector(struct vmodth_priv* priv, int hashmap_slot, double now) 
 
     //Then update the list of vmodth_call
     _vmod_remove_older_entries(calls, now);
-    
+
     //Finally, if there is no longer any vmodth_call, delete this vmodth_calls, and goto next
     if(calls->last == NULL) {
       if(prev_calls == NULL) {
@@ -308,6 +309,8 @@ _vmod_garbage_collector(struct vmodth_priv* priv, int hashmap_slot, double now) 
         prev_calls->next = calls->next;
       }
       tmp = calls->next;
+      free(calls->wins);
+      free(calls->key);
       free(calls);
       calls = tmp;
     }
@@ -325,7 +328,7 @@ _vmod_free_all(void* data) {
   struct vmodth_priv *priv;
   struct vmodth_calls *calls;
   struct vmodth_call *call;
-  
+
   //Seek and destroy. Mwahahahahh
   priv = ((struct vmodth_priv*)data);
   for(int i = 0; i < 4096; i++) {
@@ -341,6 +344,9 @@ _vmod_free_all(void* data) {
 
       //Free wins
       free(calls->wins);
+
+      //Free key
+      free(calls->key);
 
       //Free calls itself
       priv->hashmap[i] = calls->next;
@@ -367,7 +373,7 @@ init_function(struct vmod_priv *pc, const struct VCL_conf *conf) {
     AN(pc->priv);
     //Is this ever called?
     pc->free = _vmod_free_all;
-    priv = ((struct vmodth_priv*)pc->priv); 
+    priv = ((struct vmodth_priv*)pc->priv);
     memset(priv->hashmap, 0, sizeof(priv->hashmap));
     priv->total_accepted_calls = 0;
   }
@@ -425,6 +431,7 @@ vmod_is_allowed(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key
   //We are authorized
   //Add the call in the call list
   struct vmodth_call* new_call = malloc(sizeof(struct vmodth_call));
+  AN(new_call);
   new_call->time = now;
   new_call->next = calls->first;
   new_call->prev = NULL;
@@ -518,7 +525,7 @@ vmod_memory_usage(const struct vrt_ctx *ctx, struct vmod_priv *pc) {
 
   //First the size of the call_set
   result += sizeof(struct vmodth_priv);
-  
+
   //Then the size of the calls
   priv = ((struct vmodth_priv*)pc->priv);
   for(int i = 0; i < 4096; i++) {

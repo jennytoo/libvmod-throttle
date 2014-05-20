@@ -1,3 +1,13 @@
+libvmod-throttle (4-0.1) precise; urgency=low
+
+  * Added AN after all allocs.
+  * _vmod_remove_older_entries could free calls that were still referenced in
+    call windows if the number of calls exceeded the highest window limit.
+  * A few places freed the calls structure without freeing the associated
+    window list or key fields.
+
+ -- Jennifer Lang <jennytoo@gmail.com>  Tue, 20 May 2014 22:08:59 +0000
+
 libvmod-throttle (4-0.0) precise; urgency=low
 
   * Patched for Varnish 4.0
