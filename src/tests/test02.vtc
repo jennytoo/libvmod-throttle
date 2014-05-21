@@ -1,0 +1,40 @@
+varnishtest "throttle vmod segfault test"
+
+server s1 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import throttle from "${vmod_topbuild}/src/.libs/libvmod_throttle.so";
+
+	sub vcl_recv {
+	}
+
+	sub vcl_deliver {
+		set resp.http.x-key-one = throttle.is_allowed_with_time("key", "1req/1s", 3.0);
+
+		set resp.http.x-key-two = throttle.is_allowed_with_time("key", "1req/1s", 4.0);
+                # Allowed as 1 [max] - (4 [current time] - 3 [previous time]) == 0
+                # Not purged from the window call list as 3 [previous time] < 4 [current time] - 1 [max] is false
+                # Purged from the main call list as 2 [calls] > 1 [max]
+                # Call object is freed but window call list points to it still
+
+                set resp.http.x-key-three = throttle.is_allowed_with_time("three", "1req/1s", 4.2);
+                # New key which uses the newly freed memory but doesn't align due to key length
+
+                set resp.http.x-key-four = throttle.is_allowed_with_time("key", "1req/1s", 4.5);
+                # Throws segfault on accessing pointer to freed call structure
+	}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+	expect resp.http.x-key-one == 0.000
+	expect resp.http.x-key-two == 0.000
+	expect resp.http.x-key-three == 0.000
+	expect resp.http.x-key-four == 0.500
+}
+
+client c1 -run

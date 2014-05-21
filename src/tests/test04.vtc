@@ -1,0 +1,84 @@
+varnishtest "throttle vmod pruning multiple window call lists correctly test"
+
+server s1 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import throttle from "${vmod_topbuild}/src/.libs/libvmod_throttle.so";
+
+	sub vcl_recv {
+	}
+
+	sub vcl_deliver {
+		set resp.http.x-key-one = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 2.0);
+		set resp.http.x-key-one-call-list-size = throttle.call_list_size("key");
+		set resp.http.x-key-one-short-win-list-size = throttle.win_list_size("key", "2req/5s");
+		set resp.http.x-key-one-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+
+		set resp.http.x-key-two = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 5.5);
+		set resp.http.x-key-two-call-list-size = throttle.call_list_size("key");
+		set resp.http.x-key-two-short-win-list-size = throttle.win_list_size("key", "2req/5s");
+		set resp.http.x-key-two-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+
+		set resp.http.x-key-three = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 8.0);
+		set resp.http.x-key-three-call-list-size = throttle.call_list_size("key");
+		set resp.http.x-key-three-short-win-list-size = throttle.win_list_size("key", "2req/5s");
+		set resp.http.x-key-three-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+
+		# Rejected due to short duration of 2req/5s
+		set resp.http.x-key-four = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 9.0);
+		set resp.http.x-key-four-call-list-size = throttle.call_list_size("key");
+		set resp.http.x-key-four-short-win-list-size = throttle.win_list_size("key", "2req/5s");
+		set resp.http.x-key-four-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+
+		set resp.http.x-key-five = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 11.0);
+		set resp.http.x-key-five-call-list-size = throttle.call_list_size("key");
+		set resp.http.x-key-five-short-win-list-size = throttle.win_list_size("key", "2req/5s");
+		set resp.http.x-key-five-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+
+		# Rejected due to long duration of 4req/1m
+		set resp.http.x-key-six = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 23.0);
+		set resp.http.x-key-six-call-list-size = throttle.call_list_size("key");
+		set resp.http.x-key-six-short-win-list-size = throttle.win_list_size("key", "2req/5s");
+		set resp.http.x-key-six-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+	}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+
+	expect resp.http.x-key-one == 0.000
+	expect resp.http.x-key-one-call-list-size == 1
+	expect resp.http.x-key-one-short-win-list-size == 1
+	expect resp.http.x-key-one-long-win-list-size == 1
+
+	expect resp.http.x-key-two == 0.000
+	expect resp.http.x-key-two-call-list-size == 2
+	expect resp.http.x-key-two-short-win-list-size == 2
+	expect resp.http.x-key-two-long-win-list-size == 2
+
+	expect resp.http.x-key-three == 0.000
+	expect resp.http.x-key-three-call-list-size == 3
+	expect resp.http.x-key-three-short-win-list-size == 2
+	expect resp.http.x-key-three-long-win-list-size == 3
+
+	expect resp.http.x-key-four == 1.500
+	expect resp.http.x-key-four-call-list-size == 3
+	expect resp.http.x-key-four-short-win-list-size == 2
+	expect resp.http.x-key-four-long-win-list-size == 3
+
+	expect resp.http.x-key-five == 0.000
+	expect resp.http.x-key-five-call-list-size == 4
+	expect resp.http.x-key-five-short-win-list-size == 2
+	expect resp.http.x-key-five-long-win-list-size == 4
+
+	expect resp.http.x-key-six == 39.000
+	expect resp.http.x-key-six-call-list-size == 4
+	expect resp.http.x-key-six-short-win-list-size == 0
+	expect resp.http.x-key-six-long-win-list-size == 4
+}
+
+client c1 -run

@@ -224,7 +224,7 @@ struct vmodth_calls* _vmod_get_call_set_from_key(struct vmodth_priv* priv, char*
 // Private: Update the window counter (e.g. the last minute calls counter)
 void
 _vmod_update_window_counter(struct vmodth_call_win* call_win, double now) {
-  while(call_win->last_call && call_win->last_call->time < now - call_win->length) {
+  while(call_win->last_call && call_win->last_call->time <= now - call_win->length) {
     call_win->last_call = call_win->last_call->prev;
     call_win->nb_calls--;
   }
@@ -269,7 +269,7 @@ _vmod_remove_older_entries(struct vmodth_calls* calls, double now) {
     }
   }
 
-  while(calls->last && calls->last->time < now - max_win_length) {
+  while(calls->last && (calls->nb_calls > max_win_max_calls || calls->last->time <= now - max_win_length)) {
     prev = calls->last->prev;
     free(calls->last);
     calls->last = prev;
@@ -382,9 +382,9 @@ init_function(struct vmod_priv *pc, const struct VCL_conf *conf) {
   return (0);
 }
 
-// Public: is_allowed VCL command
+// Public: is_allowed_with_time VCL command (intended for testing)
 double
-vmod_is_allowed(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key, const char* window_limits) {
+vmod_is_allowed_with_time(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key, const char* window_limits, const double now) {
   struct vmodth_priv *priv;
   struct vmodth_calls *calls;
 	double result = 0;
@@ -402,12 +402,6 @@ vmod_is_allowed(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key
     UNLOCK();
     return -1.0;
   }
-
-  //Get time
-  //TODO: first a faster one, let's avoid a syscall. Find and use the request time.
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  double now = tv.tv_sec+tv.tv_usec/1000000.0;
 
   //Update the windows counters and pointers, with the current time
   for(int i = 0; i < calls->nb_wins; i++) {
@@ -468,6 +462,12 @@ vmod_is_allowed(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key
 }
 
 // Public: is_allowed VCL command
+double
+vmod_is_allowed(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key, const char* window_limits) {
+  return vmod_is_allowed_with_time(ctx, pc, key, window_limits, ctx->req->t_req);
+}
+
+// Public: remaining_calls VCL command
 VCL_INT
 vmod_remaining_calls(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key, const char* window_limit) {
   int result = -1;
@@ -510,6 +510,73 @@ vmod_remaining_calls(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char
 
   UNLOCK();
 
+  return result;
+}
+
+// Public: call_list_size VCL command
+VCL_INT
+vmod_call_list_size(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key) {
+  int result = 0;
+  struct vmodth_priv *priv;
+  struct vmodth_calls *calls;
+
+  LOCK_READ();
+
+  //Our persistent data structure
+  priv = ((struct vmodth_priv*)pc->priv);
+  AN(priv);
+
+  //Get the call set for this given key
+  calls = _vmod_get_call_set_from_key(priv, key, 0, NULL);
+  if(calls != NULL) {
+    result = calls->nb_calls;
+  }
+
+  UNLOCK();
+  return result;
+}
+
+// Public: win_list_size VCL command
+VCL_INT
+vmod_win_list_size(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key, const char* window_limit) {
+  int result = 0;
+  char* window_limit_str;
+  struct vmodth_priv *priv;
+  struct vmodth_calls *calls;
+  struct vmodth_call_win win;
+
+  LOCK_READ();
+
+  //Our persistent data structure
+  priv = ((struct vmodth_priv*)pc->priv);
+  AN(priv);
+
+  //Get the call set for this given key
+  calls = _vmod_get_call_set_from_key(priv, key, 0, NULL);
+  if(calls == NULL) {
+    UNLOCK();
+    return 0;
+  }
+
+  //Now parse the window_limit
+  window_limit_str = window_limit;
+  win = _vmod_parse_win(&window_limit_str);
+
+  if(!win.length) {
+    //Parsing failed.
+    UNLOCK();
+    return -1;
+  }
+
+  //Ok now let's iterate within the windows and find ours
+  for(int i = 0; i < calls->nb_wins; i++) {
+    if(calls->wins[i].max_calls == win.max_calls && calls->wins[i].length == win.length) {
+      //Found it! Return the remaining calls.
+      result = calls->wins[i].nb_calls;
+    }
+  }
+
+  UNLOCK();
   return result;
 }
 

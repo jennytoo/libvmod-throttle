@@ -1,3 +1,13 @@
+libvmod-throttle (4-0.2) precise; urgency=low
+
+  * Fix not purging entries when their time is exactly one period earlier
+  * Several new unit tests to cover the above bug
+  * Several new interface functions with the main focus being on testing
+  * now is based on the request time, not the current time (this might result
+    in entries being out of order, but it should be okay...?)
+
+ -- Jennifer Lang <jennifer.lang@proximic.com>  Wed, 21 May 2014 19:22:35 +0000
+
 libvmod-throttle (4-0.1) precise; urgency=low
 
   * Added AN after all allocs.

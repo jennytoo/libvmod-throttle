@@ -1,5 +1,8 @@
 $Module throttle 3 Throttle VMOD
 $Init init_function
 $Function DURATION is_allowed(PRIV_VCL, STRING, STRING)
-$Function INT remaining_calls(PRIV_VCL, STRING, STRING)
+$Function DURATION is_allowed_with_time(PRIV_VCL, STRING, STRING, REAL)
+$Function INT call_list_size(PRIV_VCL, STRING)
+$Function INT win_list_size(PRIV_VCL, STRING, STRING)
 $Function INT memory_usage(PRIV_VCL)
+$Function INT remaining_calls(PRIV_VCL, STRING, STRING)
