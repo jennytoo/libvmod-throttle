@@ -13,36 +13,36 @@ varnish v1 -vcl+backend {
 
 	sub vcl_deliver {
 		set resp.http.x-key-one = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 2.0);
-		set resp.http.x-key-one-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-one-short-win-list-size = throttle.win_list_size("key", "2req/5s");
-		set resp.http.x-key-one-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+		set resp.http.x-key-one-call-list-size = throttle.calls("key");
+		set resp.http.x-key-one-short-win-list-size = throttle.calls_for_rate_limit("key", "2req/5s");
+		set resp.http.x-key-one-long-win-list-size = throttle.calls_for_rate_limit("key", "4req/1m");
 
 		set resp.http.x-key-two = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 5.5);
-		set resp.http.x-key-two-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-two-short-win-list-size = throttle.win_list_size("key", "2req/5s");
-		set resp.http.x-key-two-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+		set resp.http.x-key-two-call-list-size = throttle.calls("key");
+		set resp.http.x-key-two-short-win-list-size = throttle.calls_for_rate_limit("key", "2req/5s");
+		set resp.http.x-key-two-long-win-list-size = throttle.calls_for_rate_limit("key", "4req/1m");
 
 		set resp.http.x-key-three = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 8.0);
-		set resp.http.x-key-three-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-three-short-win-list-size = throttle.win_list_size("key", "2req/5s");
-		set resp.http.x-key-three-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+		set resp.http.x-key-three-call-list-size = throttle.calls("key");
+		set resp.http.x-key-three-short-win-list-size = throttle.calls_for_rate_limit("key", "2req/5s");
+		set resp.http.x-key-three-long-win-list-size = throttle.calls_for_rate_limit("key", "4req/1m");
 
 		# Rejected due to short duration of 2req/5s
 		set resp.http.x-key-four = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 9.0);
-		set resp.http.x-key-four-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-four-short-win-list-size = throttle.win_list_size("key", "2req/5s");
-		set resp.http.x-key-four-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+		set resp.http.x-key-four-call-list-size = throttle.calls("key");
+		set resp.http.x-key-four-short-win-list-size = throttle.calls_for_rate_limit("key", "2req/5s");
+		set resp.http.x-key-four-long-win-list-size = throttle.calls_for_rate_limit("key", "4req/1m");
 
 		set resp.http.x-key-five = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 11.0);
-		set resp.http.x-key-five-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-five-short-win-list-size = throttle.win_list_size("key", "2req/5s");
-		set resp.http.x-key-five-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+		set resp.http.x-key-five-call-list-size = throttle.calls("key");
+		set resp.http.x-key-five-short-win-list-size = throttle.calls_for_rate_limit("key", "2req/5s");
+		set resp.http.x-key-five-long-win-list-size = throttle.calls_for_rate_limit("key", "4req/1m");
 
 		# Rejected due to long duration of 4req/1m
 		set resp.http.x-key-six = throttle.is_allowed_with_time("key", "2req/5s, 4req/1m", 23.0);
-		set resp.http.x-key-six-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-six-short-win-list-size = throttle.win_list_size("key", "2req/5s");
-		set resp.http.x-key-six-long-win-list-size = throttle.win_list_size("key", "4req/1m");
+		set resp.http.x-key-six-call-list-size = throttle.calls("key");
+		set resp.http.x-key-six-short-win-list-size = throttle.calls_for_rate_limit("key", "2req/5s");
+		set resp.http.x-key-six-long-win-list-size = throttle.calls_for_rate_limit("key", "4req/1m");
 	}
 } -start
 

@@ -2,6 +2,7 @@ Makefile
 Makefile.in
 .deps/
 .libs/
+.*.swp
 *.o
 *.lo
 *.la
@@ -28,3 +29,5 @@ Makefile.in
 
 /src/vcc_if.c
 /src/vcc_if.h
+/src/vmod_throttle.rst
+/src/vmod_throttle.man.rst

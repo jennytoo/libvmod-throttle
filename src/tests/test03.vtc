@@ -13,32 +13,32 @@ varnish v1 -vcl+backend {
 
 	sub vcl_deliver {
 		set resp.http.x-key-one = throttle.is_allowed_with_time("key", "2req/1s", 3.0);
-		set resp.http.x-key-one-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-one-win-list-size = throttle.win_list_size("key", "2req/1s");
+		set resp.http.x-key-one-call-list-size = throttle.calls("key");
+		set resp.http.x-key-one-win-list-size = throttle.calls_for_rate_limit("key", "2req/1s");
 
 		set resp.http.x-key-two = throttle.is_allowed_with_time("key", "2req/1s", 3.0);
-		set resp.http.x-key-two-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-two-win-list-size = throttle.win_list_size("key", "2req/1s");
+		set resp.http.x-key-two-call-list-size = throttle.calls("key");
+		set resp.http.x-key-two-win-list-size = throttle.calls_for_rate_limit("key", "2req/1s");
 
 		# Third item is rejected (3 calls over 1 second)
 		set resp.http.x-key-three = throttle.is_allowed_with_time("key", "2req/1s", 3.0);
-		set resp.http.x-key-three-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-three-win-list-size = throttle.win_list_size("key", "2req/1s");
+		set resp.http.x-key-three-call-list-size = throttle.calls("key");
+		set resp.http.x-key-three-win-list-size = throttle.calls_for_rate_limit("key", "2req/1s");
 
 		# Fourth item is accepted (new time period)
 		set resp.http.x-key-four = throttle.is_allowed_with_time("key", "2req/1s", 4.0);
-		set resp.http.x-key-four-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-four-win-list-size = throttle.win_list_size("key", "2req/1s");
+		set resp.http.x-key-four-call-list-size = throttle.calls("key");
+		set resp.http.x-key-four-win-list-size = throttle.calls_for_rate_limit("key", "2req/1s");
 
 		# Fifth item is accepted (2 calls over 1 second)
 		set resp.http.x-key-five = throttle.is_allowed_with_time("key", "2req/1s", 4.5);
-		set resp.http.x-key-five-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-five-win-list-size = throttle.win_list_size("key", "2req/1s");
+		set resp.http.x-key-five-call-list-size = throttle.calls("key");
+		set resp.http.x-key-five-win-list-size = throttle.calls_for_rate_limit("key", "2req/1s");
 
 		# Sixth item is accepted (2 calls over 1 second)
 		set resp.http.x-key-six = throttle.is_allowed_with_time("key", "2req/1s", 5.0);
-		set resp.http.x-key-six-call-list-size = throttle.call_list_size("key");
-		set resp.http.x-key-six-win-list-size = throttle.win_list_size("key", "2req/1s");
+		set resp.http.x-key-six-call-list-size = throttle.calls("key");
+		set resp.http.x-key-six-win-list-size = throttle.calls_for_rate_limit("key", "2req/1s");
 	}
 } -start
 

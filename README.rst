@@ -81,6 +81,71 @@ Example
     Please note: You cannot set 2 differents set of rate limits for a same key. (If you do, only one will be used, and the other will be ignored). In this example, simply add some extra text to the key to differentiate the authentificated calls from the non-authentificated ones.
 
 
+is_allowed_with_time
+--------------------
+
+Prototype
+        ::
+
+                is_allowed_with_time(STRING key, STRING rate_limits, REAL seconds)
+Arguments
+    key: Same as in is_allowed
+
+    rate_limits: Same as in is_allowed
+
+    seconds: Time for the check in seconds since the epoch
+Return value
+    DURATION
+Description
+    Identical to is_allowed except that the request time is passed in instead of taken from the request.
+    This can be used directly but is exposed for unit testing.
+
+
+calls
+-----
+
+Prototype
+        ::
+
+                calls(STRING key)
+Argments
+    key: The unique key that will identify what you are throttling, used with the is_allowed() function.
+Return value
+    INT
+Description
+    Return the total number of calls being tracked for the given key.
+
+
+calls_for_rate_limit
+--------------------
+
+Prototype
+        ::
+
+                calls_for_rate_limit(STRING key, STRING rate_limit)
+Argments
+    key: The unique key that will identify what you are throttling, used with the is_allowed() function.
+
+    rate_limit: A single rate limit, with the same syntax than in the is_allowed() function.
+Return value
+    INT
+Description
+    Return the total number of calls being tracked for the given key and rate limit; returns -1 if rate_limit is invalid.
+
+
+memory_usage
+------------
+
+Prototype
+        ::
+
+                memory_usage()
+Return value
+    INT
+Description
+    Return the amount of memory in use by this module.
+
+
 remaining_calls
 ---------------
 
@@ -93,9 +158,9 @@ Arguments
 
     rate_limit: A single rate limit, with the same syntax than in the is_allowed() function. It has to be one of the rate limits you defined in the is_allowed() function.
 Return value
-    INT; -1 if the key is not found
+    INT
 Description
-    Return the number of remaining allowed calls for a given key, and for a given rate limitation.
+    Return the number of remaining allowed calls for a given key, and for a given rate limitation; returns -1 if the key is not found or rate_limit is invalid.
 Example
     In the API example above, show in a header the remaining calls for the hour::
 
@@ -145,7 +210,7 @@ With this example, you would limit the request rate per IP and per URL. A single
         if(req.url ~ "^/my_api_path/my_api_name") {
             if(throttle.is_allowed("ip:" + client.ip + ":api:api_name", "2req/s, 30req/h") > 0s)
 
-Finally, if you want to want to track the memory usage of this throttle vmod , you can use this command::
+Finally, if you want to want to track the memory usage of this throttle vmod, you can use this command::
 
         if(req.url == "/my_admin_page") {
             set resp.http.X-throttle-memusage = throttle.memory_usage();

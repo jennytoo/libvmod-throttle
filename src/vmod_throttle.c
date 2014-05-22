@@ -513,9 +513,9 @@ vmod_remaining_calls(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char
   return result;
 }
 
-// Public: call_list_size VCL command
+// Public: calls VCL command
 VCL_INT
-vmod_call_list_size(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key) {
+vmod_calls(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key) {
   int result = 0;
   struct vmodth_priv *priv;
   struct vmodth_calls *calls;
@@ -536,9 +536,9 @@ vmod_call_list_size(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char*
   return result;
 }
 
-// Public: win_list_size VCL command
+// Public: calls_for_rate_limit VCL command
 VCL_INT
-vmod_win_list_size(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key, const char* window_limit) {
+vmod_calls_for_rate_limit(const struct vrt_ctx *ctx, struct vmod_priv *pc, const char* key, const char* window_limit) {
   int result = 0;
   char* window_limit_str;
   struct vmodth_priv *priv;
