@@ -8,7 +8,7 @@ Varnish Throttling Module
 
 :Author: Nicolas Deschildre
 :Updated by: Jennifer Lang
-:Date: 2014-05-16
+:Date: 2015-10-22
 :Version: 4.0.0
 :Manual section: 3
 

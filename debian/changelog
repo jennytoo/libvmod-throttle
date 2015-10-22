@@ -1,3 +1,9 @@
+libvmod-throttle (4-0.4) precise; urgency=low
+
+  * Updated build rules
+
+ -- Jennifer Lang <jennifer.lang@proximic.com>  Thu, 22 Oct 2015 21:07:49 +0000
+
 libvmod-throttle (4-0.3) precise; urgency=low
 
   * Updated manpage and changed window size call names
